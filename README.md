@@ -1,4 +1,4 @@
-# AI-4-Media-Project-Template (24/25)
+# AI-4-Media-Project-Yixuan-Xiong
 
 Follow the steps in [the project repository setup instructions](https://moodle.arts.ac.uk/mod/page/view.php?id=1374587) on how to setup the repository for your AI 4 Media mini-project.
 
