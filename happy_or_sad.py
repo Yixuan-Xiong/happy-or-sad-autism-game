@@ -153,7 +153,7 @@ def extract_facial_landmarks(image, face_mesh_model):
     face_height = maximum_coordinates[1] - minimum_coordinates[1] 
 
     # Take the larger value to ensure the stability of the normalization
-    face_size = max(face_width, face_height)  # 取较大值，保证归一化的稳定性
+    face_size = max(face_width, face_height)
     
     if face_size == 0:
         return None
@@ -250,4 +250,3 @@ with mp_face_mesh.FaceMesh(
 
 camera_capture.release()
 cv2.destroyAllWindows()
-
