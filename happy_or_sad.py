@@ -2,7 +2,6 @@ import streamlit as st
 import cv2
 import mediapipe as mp
 import numpy as np
-from PIL import Image
 import time
 import os
 import random
@@ -36,24 +35,27 @@ if reference_image is None:
 reference_image_rgb = cv2.cvtColor(reference_image, cv2.COLOR_BGR2RGB)
 
 # Streamlit UI design
-st.title("🎭 HAPPY OR SAD")
-st.write("Please imitate the target expression")
+if "mode" not in st.session_state:
+    st.session_state["mode"] = "home"
 
-# Show target images
-st.subheader("Target Expression")
-st.image(
-    image = reference_image_rgb, 
-    caption="Target Expression", 
-    use_container_width=True)
-
-# Mode Selection (Single-player or Two-player)
-mode = st.radio(
-    "Select Mode:",  
-    ("Single-player", "Two-player")
-)
+if st.session_state["mode"] == "home":
+    st.title("🎭 HAPPY OR SAD")
+    st.subheader("Select Mode:")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("👤 Single-player"):
+            st.session_state["mode"] = "single"
+            st.rerun()
+    
+    with col2:
+        if st.button("👥 Two-players"):
+            st.session_state["mode"] = "double"
+            st.rerun()
 
 # Initialize camera
-camera_capture = cv2.VideoCapture(0)
+# Ask Chatgpt to use cv2.CAP_AVFOUNDATION can improve mac's camera performance
+camera_capture = cv2.VideoCapture(0,cv2.CAP_AVFOUNDATION) 
 if not camera_capture.isOpened():
     st.error("Cannot open the camera, please check the device permissions.")
     st.stop()
@@ -177,7 +179,6 @@ if reference_facial_landmarks is None:
     camera_capture.release()
     st.stop()
 
-
 # Calculating cosine similarity
 def calculate_cosine_similarity(vector_a, vector_b):
     # dot product
@@ -196,82 +197,64 @@ def calculate_cosine_similarity(vector_a, vector_b):
 
     return cosine_similarity 
 
-# UI Placeholders
-real_time_video_placeholder = st.empty()
-matching_score_placeholder = st.empty()
-
-# If Two-player mode, create two columns for player 1 and player 2
-if mode == "Two-player":
-    col1, col2 = st.columns(2)
-else:
-    col1 = st 
-
-# Create placeholders for player 1 video and score
-video_placeholder_1 = col1.empty()
-score_placeholder_1 = col1.empty()
-
-# Create placeholders for player 2 video and score if in Two-player mode
-if mode == "Two-player":
-    video_placeholder_2 = col2.empty()
-    score_placeholder_2 = col2.empty()
-else:
-    video_placeholder_2 = None
-    score_placeholder_2 = None
-
-# Add a stop button
-stop_button = st.button("Stop")
-
 # Two-player mode, detect only 2 face
-if mode == "Two-player":
+if st.session_state["mode"] == "double":
     number_of_faces_to_detect = 2
 # Single-player mode, detect only 1 face
 else:
     number_of_faces_to_detect = 1
 
-# Initialize FaceMesh model with the selected number of faces
-with mp_face_mesh.FaceMesh(
-    static_image_mode=False,
-    max_num_faces=number_of_faces_to_detect,
-    refine_landmarks=True,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5
-) as real_time_face_mesh_model:
+# Countdown + real-time score monitoring
+def countdown_with_live_monitoring(video_placeholder, score_placeholder):
 
-    # camera data reading loop
-    while camera_capture.isOpened() and not stop_button:
-        # Capture one frame from the webcam
-        capture_success, video_frame = camera_capture.read()
+    with mp_face_mesh.FaceMesh(
+        static_image_mode=False, 
+        max_num_faces=number_of_faces_to_detect, 
+        refine_landmarks=True
+    ) as real_time_face_mesh_model:
+
+        timer_placeholder = st.empty()
+        captured_frame_rgb = None 
         
-        # If the camera data cannot be read, prompt the user and exit the loop
-        if not capture_success:
-            st.warning("Unable to read data from the camera. Please check your camera.")
-            break
+        # Ask Chatgpt about the countdown timer design
+        start_time = time.time()
+        while time.time() - start_time < 5:
+            remaining_time = int(5 - (time.time() - start_time))
+            timer_placeholder.subheader(f"⏳ Count down: {remaining_time}")
+            capture_success, frame = camera_capture.read()
 
-        # RGB
-        video_frame_rgb = cv2.cvtColor(video_frame, cv2.COLOR_BGR2RGB)
+            if capture_success:
+                video_frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                video_placeholder.image(video_frame_rgb, caption="Live Camera", use_container_width=True)
+            else:
+                st.warning("Unable to read from camera")
+                break
+
+        timer_placeholder.empty()
+
+        # Freeze frame after countdown
+        captured_frame_rgb = video_frame_rgb.copy()
 
         # Detect face landmarks
         face_result = real_time_face_mesh_model.process(video_frame_rgb)
 
         # Single-player mode 
-        if mode == "Single-player":
-            current_facial_landmarks = extract_facial_landmarks(video_frame_rgb, real_time_face_mesh_model)
-            if current_facial_landmarks is not None:
+        if st.session_state["mode"] == "single":
+            landmarks = extract_facial_landmarks(video_frame_rgb, real_time_face_mesh_model)
+            if landmarks is not None:
                 similarity_score = calculate_cosine_similarity(
                     reference_facial_landmarks.flatten(),
-                    current_facial_landmarks.flatten()
+                    landmarks.flatten()
                 ) * 100
-                score_placeholder_1.write(f"👤 Match Score: **{similarity_score:.1f}%**")
+                score_placeholder.write(f"👤 Match Score: **{similarity_score:.1f}%**")
             else:
-                score_placeholder_1.write("👤 Match Score: **--%**")
+                score_placeholder.write("👤 Match Score: **--%**")
+            video_placeholder.image(video_frame_rgb, channels="RGB")
 
-            video_placeholder_1.image(video_frame_rgb, channels="RGB")
-
-        # Two-player mode
-        if mode == "Two-player":
+        # Two-player mode 
+        elif st.session_state["mode"] == "double":
             faces = face_result.multi_face_landmarks
 
-            # Player 1
             if faces and len(faces) >= 1:
                 landmarks_1 = extract_facial_landmarks(video_frame_rgb, real_time_face_mesh_model)
                 if landmarks_1 is not None:
@@ -279,31 +262,52 @@ with mp_face_mesh.FaceMesh(
                         reference_facial_landmarks.flatten(),
                         landmarks_1.flatten()
                     ) * 100
-                    score_placeholder_1.write(f"👤👤 Player 1 Match Score: **{similarity_score_1:.1f}%**")
+                    score_placeholder.write(f"👥 Player Match Score: **{similarity_score_1:.1f}%**")
                 else:
-                    score_placeholder_1.write("👤👤 Player 1 Match Score: **--%**")
-                video_placeholder_1.image(video_frame_rgb, channels="RGB")
+                    score_placeholder.write("👥 Player Match Score: **--%**")
+                video_placeholder.image(video_frame_rgb, channels="RGB")
             else:
-                score_placeholder_1.write("👤👤 Waiting for Player 1...")
+                score_placeholder.write("👥 Waiting for Player...")
 
-            # Player 2 
-            if faces and len(faces) >= 2:
-                landmarks_2 = extract_facial_landmarks(video_frame_rgb, real_time_face_mesh_model)
-                if landmarks_2 is not None:
-                    similarity_score_2 = calculate_cosine_similarity(
-                        reference_facial_landmarks.flatten(),
-                        landmarks_2.flatten()
-                    ) * 100
-                    score_placeholder_2.write(f"👤👤 Player 2 Match Score: **{similarity_score_2:.1f}%**")
-                else:
-                    score_placeholder_2.write("👤👤 Player 2 Match Score: **--%**")
-                video_placeholder_2.image(video_frame_rgb, channels="RGB")
-            else:
-                if video_placeholder_2:
-                    score_placeholder_2.write("👤👤 Waiting for Player 2...")
+        # Freeze final image
+        if captured_frame_rgb is not None:
+            video_placeholder.image(captured_frame_rgb, 
+                                    caption="Camera freeze", 
+                                    use_container_width=True
+                                    )
 
-        # Make the loop pause briefly to reduce CPU usage and make the screen smoother
-        time.sleep(0.05)
+# Single player mode
+if st.session_state["mode"] == "single":
+    st.subheader("Please imitate the target's expression")
+    st.image(reference_image_rgb, 
+             caption="target expression", 
+             use_container_width=True)
+
+    video_placeholder = st.empty()
+    score_placeholder = st.empty()
+    countdown_with_live_monitoring(video_placeholder, score_placeholder)
+
+# Two-player mode
+elif st.session_state["mode"] == "double":
+    st.subheader("The two players imitate one by one")
+    st.image(reference_image_rgb, 
+             caption="target expression", 
+             use_container_width=True)
+
+    col1, col2 = st.columns(2)
+
+    # player 1
+    col1.subheader("player 1")
+    video_placeholder_1 = col1.empty()
+    score_placeholder_1 = col1.empty()
+    countdown_with_live_monitoring(video_placeholder_1, score_placeholder_1)
+
+    # player 2
+    col2.subheader("player 2")
+    video_placeholder_2 = col2.empty()
+    score_placeholder_2 = col2.empty()
+    countdown_with_live_monitoring(video_placeholder_2, score_placeholder_2)
 
 camera_capture.release()
 cv2.destroyAllWindows()
+
