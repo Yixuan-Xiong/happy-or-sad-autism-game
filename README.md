@@ -19,6 +19,6 @@ streamlit run "happy_or_sad.py"
 
 IMAGE_FOLDER_PATH = "/Users/xiongyixuan/Desktop/ai code/AI-4-Media-Project-Yixuan-Xiong/target_image" （If can't run， copy the target_image path）
 
-This is the model， it already in the code, don't need download again:
-mp_face_mesh = mp.solutions.face_mesh
+This is the model: mp_face_mesh = mp.solutions.face_mesh. It already in the code, don't need download again!
+
 
