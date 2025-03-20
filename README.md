@@ -13,11 +13,9 @@ Follow the steps in [the project repository setup instructions](https://moodle.a
 Instructions for setting up the conda environment, any files that need downloading, and the specific technical instructions for how to run your code project go here:
 
 ```
-CLI instructions should go in a code block like this
+streamlit run "happy_or_sad.py"
 ```
 
-Run in terminal:
-streamlit run "happy_or_sad.py"
 
 IMAGE_FOLDER_PATH = "/Users/xiongyixuan/Desktop/ai code/AI-4-Media-Project-Yixuan-Xiong/target_image" （If can't run， copy the target_image path）
 
