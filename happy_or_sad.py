@@ -205,7 +205,7 @@ elif st.session_state["page"] == "game":
             for index in key_index_list
         ])
         
-        # Ask Chatgpt
+        # Ask Chatgpt:The key points of all five senses are centered (with the center of the face as the origin) and normalized to avoid errors.
         # Calculate and normalize facial centroids
         # Calculate the minimum coordinates of the key point
         minimum_coordinates = key_points_array.min(axis=0)

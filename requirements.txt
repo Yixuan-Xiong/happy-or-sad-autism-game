@@ -20,3 +20,10 @@ scikit-image
 acids-rave
 open_clip_torch
 streamlit-drawable-canvas
+
+cv2
+mediapipe
+numpy
+time
+os
+random
