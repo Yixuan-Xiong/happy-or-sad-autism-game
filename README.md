@@ -1,12 +1,23 @@
-# AI-4-Media-Project-Yixuan-Xiong
+# HAPPY OR SAD - Emotion Game for Autism Support
+HAPPY OR SAD is an interactive facial expression mimicry game built with MediaPipe and Streamlit. Players are challenged to imitate facial expressions shown on the screen, and the system scores them based on facial similarity. It supports both single-player and two-player modes and is designed to be both fun and educational — especially helpful for children or individuals with autism to practice emotion recognition.  
 
-Follow the steps in [the project repository setup instructions](https://moodle.arts.ac.uk/mod/page/view.php?id=1374587) on how to setup the repository for your AI 4 Media mini-project.
+## Project Overview
 
+This game uses the **MediaPipe FaceMesh** model to detect 478 facial landmarks and compare the player's expression to a target image using cosine similarity. The landmarks are normalised for fair scoring regardless of face shape or size. Streamlit is used to create a smooth, interactive interface.  
 
-## Student name: Yixuan Xiong
-## Student number: 23040253
-## Project title: HAPPY OR SAD – An Emotion Experience
-## Link to project video recording: https://ual.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=b53e8fec-6a30-40a8-9e3b-b2a60042a9a1&start=0
+## 📁 Project Structure
+
+```text
+happy_or_sad/
+├── happy_or_sad.py           # Main Streamlit app entry point
+├── target_image/             # Folder containing expression reference images
+├── requirements.txt          # Python dependencies (streamlit, mediapipe, opencv-python, etc.)
+└── README.md                 # Project documentation
+```
+
+## project display
+https://youtu.be/iXdfAWfinkU
+
 
 # Setup instructions:
 
