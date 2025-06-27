@@ -7,7 +7,7 @@ import os
 import random
 
 # Target Emoji Pictures folder
-IMAGE_FOLDER_PATH = "/Users/xiongyixuan/Desktop/ai code/AI-4-Media-Project-Yixuan-Xiong/target_image"
+IMAGE_FOLDER_PATH = "target_image"
 
 # Get all images
 image_file_list = [
